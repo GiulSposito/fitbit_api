@@ -45,13 +45,15 @@ str(hrdt)
 # convert "time" in date-time
 hrdt %>% 
   as.tibble() %>% 
-  mutate( timestamp = paste0("2019-02-24 ", time) ) %>% 
-  mutate( timestamp = ymd_hms(timestamp) ) -> hrtb
+  mutate( datetime = paste0("2019-02-24 ", time) ) %>% 
+  mutate( datetime = ymd_hms(datetime) ) %>% 
+  rename(fitbit_hr = value) %>% 
+  select(datetime, fitbit_hr) -> fitbit_hr
 
-glimpse(hrtb)
+glimpse(fitbit_hr)
 
-hrtb %>% 
+fitbit_hr %>% 
   ggplot() +
-  geom_line(aes(x=timestamp, y=value, color=value)) +
+  geom_line(aes(x=datetime, y=fitbit_hr, color=fitbit_hr)) +
   scale_color_gradient(name="heart rate (bpm)",low="green", high="red") + #,breaks=seq(hr_lower_limit,hr_upper_limit,20), limits=c(hr_lower_limit,hr_upper_limit)) +
   theme_minimal()

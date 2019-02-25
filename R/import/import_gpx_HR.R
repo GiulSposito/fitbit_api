@@ -16,22 +16,21 @@ gpx_file <- htmlTreeParse("./data/Visconde_de_Sotello_e_Moenda.gpx", useInternal
 #   </extensions>
 # </trkpt>
 
-
 # extract (by xpath) times
 dtime <- xpathSApply(gpx_file, path = "//trkpt/time", xmlValue) 
 hr    <- xpathSApply(gpx_file, path = "//trkpt/extensions/trackpointextension/hr", xmlValue) 
 
-# compose a tiblle
+# create a tibble
 polar_hr <- tibble(
-  timestamp = ymd_hms(dtime),
-  hr        = as.integer(hr)
+  datetime  = ymd_hms(dtime),
+  polar_hr = as.integer(hr)
 )
 
 glimpse(polar_hr)
 
-# plot data
+# Visualize dataset
 polar_hr %>% 
   ggplot() +
-  geom_line(aes(x=timestamp, y=hr, color=hr)) +
+  geom_line(aes(x=datetime, y=polar_hr, color=polar_hr)) +
   scale_color_gradient(name="heart rate (bpm)",low="green", high="red") + 
   theme_minimal()
