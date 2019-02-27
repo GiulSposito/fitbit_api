@@ -1,0 +1,38 @@
+---
+title: "Comparing Fitbit and Polar HR data"
+output: html_notebook
+---
+
+No MTB que fiz no último fim de semana eu usei tanto um Polar H7 quando e um Fitbit Charge 
+
+<!--more-->
+
+## Introduction
+
+Neste post vamos comparar aquisição de dados de frequência cardíaca realizado por dois dispositivos diferentes: uma pulseira *wearable* de esporte chamada **fitbit** e numa cinta de monitoramento cardíaco Polar.
+
+### Devices
+
+O modelo de pulseira utilizado foi o **[fitbit ChargeHR](https://www.fitbit.com/be/chargehr)**, que atualmente já não é mais comercializado. Para realizar a medição da frequência cardíaca **fitbit** uma tecnologia própria chama [PurePulse](https://www.fitbit.com/purepulse) When your heart beats, your capillaries expand and contract based on blood volume changes. PurePulse LEDs (light-emitting diodes) on your Fitbit device reflect onto the skin to detect blood volume changes, and finely-tuned algorithms are applied to measure heart rate automatically and continuously. The heart-rate icon you see on the display tells you if you're in 1 of 3 heart-rate zones.
+
+O monitor de frequencia cardíaca usado, foi o **[Polar H7 Heart Rate Sensor](https://www.polar.com/us-en/products/accessories/h10_heart_rate_sensor)**, que trabalha como um Eletro Cardiograma, ou seja, eletrodos em contato com a pele detectam o sinal elétrico disparado pelo coração a cada batida cardíaca.
+
+Dessa maneira podemos comparar a qualidade e a precisão dos dados de frequência cardíaca obtidos com tecnologias bem diferentes.
+
+## Data Acquisitions
+
+Primeiro passo é obter os dados dos dispositivos.
+
+### Fitbit
+
+Para o **fitbit**, o acesso dos dados pode ser feita via API, mas para isso é necessário fazer o cadastro no portal de desenvolvimento.
+
+
+
+### Referências
+
+1. [https://www.polar.com]
+1. [https://www.fitbit.com]
+1. <site do acesso ao Fitbit>
+1. <artigo de bland altman>
+1. https://www.telegraph.co.uk/technology/news/12086337/Fitbit-heart-rate-tracking-is-dangerously-inaccurate-lawsuit-claims.html
