@@ -40,6 +40,7 @@ plot(model)
 
 
 ## teste Bland Altman
+#  ref: https://seer.ufrgs.br/hcpa/article/view/11727/7021
 
 # Deve ser avaliado se as diferenças entre as variáveis dependem ou não do tamanho da
 # medida. Isto pode ser feito através de uma correlação entre as diferenças e as médias, que
