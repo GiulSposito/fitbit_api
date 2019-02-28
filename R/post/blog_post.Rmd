@@ -38,7 +38,7 @@ Com os parametros de acesso em mãos, podemos obter os dados capturados do **fit
 # loading ID and Secret 
 # (see the post apendix)
 library(yaml)
-.config <- yaml.load_file("./config/config.yml")
+.config <- yaml.load_file("./config/fitbit_config.yml")
 
 # performing authentication and autorization
 library(httr)
@@ -72,11 +72,39 @@ gen_hr_url <- function(.user_id="-",.date="today",.period="1d")
 
 
 # make a HTTP GET 
+# 2019-02-24 is the date of my MTB 
 resp <- GET(gen_hr_url(.date="2019-02-24"), conf=config(token=token))
 
 # check if the result is 200 (OK)
 resp$status_code
 
+```
+
+Se tudo o ocorreu bem, a [requisição http](https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview) devolveu [status 200](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html), então podemos processar o [json](https://www.w3schools.com/js/js_json_intro.asp) do conteúdo da resposta para extrair os dados de frequencia cardíaca requisitada.
+
+```{r fbJsonHandling, cache=TRUE, message=FALSE, warning=FALSE}
+
+# process response content
+library(jsonlite)
+data <- fromJSON(content(resp, "text"))
+
+# get the heart rate data 
+# see the response json format in https://dev.fitbit.com/build/reference/web-api/heart-rate/ 
+hrdt <- data$`activities-heart-intraday`$dataset
+
+# convert the "text time data" in in date-time and create a tibble
+library(tidyverse)
+library(lubridate)
+hrdt %>% 
+  as.tibble() %>% 
+  mutate( datetime = paste0("2019-02-24 ", time) ) %>% # adding "day" to time info
+  mutate( datetime = ymd_hms(datetime) ) %>% 
+  rename(fitbit_hr = value) %>% 
+  select(datetime, fitbit_hr) -> fitbit_hr
+
+# let's see we got
+fitbit_ht %>% 
+  knitr::kable()
 ```
 
 
@@ -92,7 +120,7 @@ Para evitar que senhas, app_ID e o secret fiquem *hard coded* e acabem versionad
 ```
 # registe a new app in Fitbit developer site at # https://dev.fitbit.com/apps/new
 # follow the instruction on https://hydroecology.net/getting-detailed-fitbit-data-with-r/
-# fill these var contents and save as 'config.yml'
+# fill these var contents and save as 'fitbit_config.yml'
 
 app_name: ""
 client_id: ""
