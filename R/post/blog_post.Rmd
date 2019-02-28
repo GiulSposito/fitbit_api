@@ -25,14 +25,90 @@ Primeiro passo é obter os dados dos dispositivos.
 
 ### Fitbit
 
-Para o **fitbit**, o acesso dos dados pode ser feita via API, mas para isso é necessário fazer o cadastro no portal de desenvolvimento.
+Para o **fitbit**, o acesso dos dados pode ser feita via [Web API](https://dev.fitbit.com/build/reference/web-api/) que utiliza [Oauth 2.0](https://oauth.net/2/) para autenticação d autorização, então é necessário obter [ID e Secret](https://www.oauth.com/oauth2-servers/client-registration/client-id-secret/) fazendo o cadastro no portal de desenvolvimento.
+
+1. passo a passo
+1. passo a passo 
+1. passo a passo
+
+Com os parametros de acesso em mãos, podemos obter os dados capturados do **fitbit** usando o `httr package`.
+
+```{r loadingSettings, cache=TRUE, message=FALSE, warning=FALSE}
+
+# loading ID and Secret 
+# (see the post apendix)
+library(yaml)
+.config <- yaml.load_file("./config/config.yml")
+
+# performing authentication and autorization
+library(httr)
+fb_app   <- oauth_app(.config$app_name, .config$client_id, .config$client_secret)
+fb_oauth <- oauth_endpoint(authorize = .config$auth_uri, access = .config$refresh_token_uri)
+token    <- oauth2.0_token(fb_oauth, fb_app, scope = c("activity","heartrate","sleep"), cache = F, use_basic_auth = T)
+
+```
+
+As funções `oauth_app`, `oauth_endpoint` e `oauth2.0_token` executam o fluxo de autenticação e autorização do protocolo `OAuth 2.0` para obter o `Token`de acesso, que precisará ser passado para cada requisição feita à API do site do **fibtib**.
+
+Podemos então fazer a chamada ao *[endpoint](https://dev.fitbit.com/build/reference/web-api/heart-rate/)* responsável pela consulta às informações de frequência cardíaca.
+
+```{r heartRateEndPoint, cache=T, warning=F, message=F}
+
+# request HR data
+# Resource URL - There are two acceptable formats for retrieving time series data:
+#
+# GET https://api.fitbit.com/1/user/[user-id]/activities/heart/date/[date]/[period].json
+# GET https://api.fitbit.com/1/user/[user-id]/activities/heart/date/[base-date]/[end-date].json
+#
+# user-id:   The encoded ID of the user. Use "-" (dash) for current logged-in user.
+# base-date: The range start date, in the format yyyy-MM-dd or today.
+# end-date:	 The end date of the range.
+# date:	     The end date of the period specified in the format yyyy-MM-dd or today.
+# period:	   The range for which data will be returned. Options are 1d, 7d, 30d, 1w, 1m.
+
+# shortcut to define a url to get heart rate
+gen_hr_url <- function(.user_id="-",.date="today",.period="1d")
+  glue("https://api.fitbit.com/1/user/{.user_id}/activities/heart/date/{.date}/{.period}.json")
 
 
+# make a HTTP GET 
+resp <- GET(gen_hr_url(.date="2019-02-24"), conf=config(token=token))
+
+# check if the result is 200 (OK)
+resp$status_code
+
+```
+
+
+
+
+## Apendix 
+
+### config.yml
+
+Para evitar que senhas, app_ID e o secret fiquem *hard coded* e acabem versionados e expostos no [Github](https://github.com/) por acidente, eu costumo criar um aquivo [yaml](https://en.wikipedia.org/wiki/YAML) e coloca-lo no '.gitignore'. Neste código o arquivo yaml tem o seguinte formato:
+
+
+```
+# registe a new app in Fitbit developer site at # https://dev.fitbit.com/apps/new
+# follow the instruction on https://hydroecology.net/getting-detailed-fitbit-data-with-r/
+# fill these var contents and save as 'config.yml'
+
+app_name: ""
+client_id: ""
+client_secret: ""
+callback_url: ""
+auth_uri: ""
+refresh_token_uri: ""
+```
 
 ### Referências
 
+Referências utilizadas neste post:
+
 1. [https://www.polar.com]
 1. [https://www.fitbit.com]
-1. <site do acesso ao Fitbit>
-1. <artigo de bland altman>
-1. https://www.telegraph.co.uk/technology/news/12086337/Fitbit-heart-rate-tracking-is-dangerously-inaccurate-lawsuit-claims.html
+1. [https://dev.fitbit.com]
+1. [https://seer.ufrgs.br/hcpa/article/view/11727/7021]
+1. [https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/]
+1. [https://www.telegraph.co.uk/technology/news/12086337/Fitbit-heart-rate-tracking-is-dangerously-inaccurate-lawsuit-claims.html]

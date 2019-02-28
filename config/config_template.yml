@@ -1,6 +1,7 @@
-# registe a new app in Fitbit developer site
+# registe a new app in Fitbit developer site at # https://dev.fitbit.com/apps/new
 # follow the instruction on https://hydroecology.net/getting-detailed-fitbit-data-with-r/
 # fill these var contents and save as 'config.yml'
+
 app_name: ""
 client_id: ""
 client_secret: ""
