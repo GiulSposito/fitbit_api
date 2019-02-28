@@ -1,6 +1,8 @@
 ---
 title: "Comparing Fitbit and Polar HR data"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 No MTB que fiz no último fim de semana eu usei tanto um Polar H7 quando e um Fitbit Charge 
@@ -15,7 +17,11 @@ Neste post vamos comparar aquisição de dados de frequência cardíaca realizad
 
 O modelo de pulseira utilizado foi o **[fitbit ChargeHR](https://www.fitbit.com/be/chargehr)**, que atualmente já não é mais comercializado. Para realizar a medição da frequência cardíaca **fitbit** uma tecnologia própria chama [PurePulse](https://www.fitbit.com/purepulse) When your heart beats, your capillaries expand and contract based on blood volume changes. PurePulse LEDs (light-emitting diodes) on your Fitbit device reflect onto the skin to detect blood volume changes, and finely-tuned algorithms are applied to measure heart rate automatically and continuously. The heart-rate icon you see on the display tells you if you're in 1 of 3 heart-rate zones.
 
+![fitbit Charge HR](https://images-na.ssl-images-amazon.com/images/I/51wafNtYODL.jpg)
+
 O monitor de frequencia cardíaca usado, foi o **[Polar H7 Heart Rate Sensor](https://www.polar.com/us-en/products/accessories/h10_heart_rate_sensor)**, que trabalha como um Eletro Cardiograma, ou seja, eletrodos em contato com a pele detectam o sinal elétrico disparado pelo coração a cada batida cardíaca.
+
+![Polar H7](https://cdn.shopify.com/s/files/1/0904/0726/products/polar-polar-accessories-black-retail-package-med-xl-30-45-inches-polar-h7-bluetooth-smart-chest-transmitter-7795311878_x700.png?v=1538423599)
 
 Dessa maneira podemos comparar a qualidade e a precisão dos dados de frequência cardíaca obtidos com tecnologias bem diferentes.
 
@@ -67,6 +73,7 @@ Podemos então fazer a chamada ao *[endpoint](https://dev.fitbit.com/build/refer
 # period:	   The range for which data will be returned. Options are 1d, 7d, 30d, 1w, 1m.
 
 # shortcut to define a url to get heart rate
+library(glue)
 gen_hr_url <- function(.user_id="-",.date="today",.period="1d")
   glue("https://api.fitbit.com/1/user/{.user_id}/activities/heart/date/{.date}/{.period}.json")
 
@@ -103,21 +110,34 @@ hrdt %>%
   select(datetime, fitbit_hr) -> fitbit_hr
 
 # let's see we got
-fitbit_ht %>% 
-  knitr::kable()
+library(knitr)
+library(kableExtra)
+fitbit_hr %>% 
+  head(10) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
+Os dados de frequência cardíaca do **fitbit** obtidos são medições minuto à minuto da taxa batimentos por minuto, é possível visualizar a frequência cardíaca ao longo do dia.
 
+```{r fbHeartHate, cache=TRUE, message=FALSE, warning=FALSE}
+# ploting HR x Datatime
+fitbit_hr %>% 
+  ggplot() +
+  geom_line(aes(x=datetime, y=fitbit_hr, color=fitbit_hr)) +
+  scale_color_gradient(name="heart rate (bpm)",low="green", high="red") +
+  theme_minimal()
+```
 
 
 ## Apendix 
 
 ### config.yml
 
-Para evitar que senhas, app_ID e o secret fiquem *hard coded* e acabem versionados e expostos no [Github](https://github.com/) por acidente, eu costumo criar um aquivo [yaml](https://en.wikipedia.org/wiki/YAML) e coloca-lo no '.gitignore'. Neste código o arquivo yaml tem o seguinte formato:
+Para evitar que senhas, app_ID e o secret fiquem *hard coded* e acabem versionados e expostos no [Github](https://github.com/) por acidente, eu costumo criar um aquivo [yaml](https://en.wikipedia.org/wiki/YAML) e coloca-lo no `.gitignore`. Neste código o arquivo yaml tem o seguinte formato:
 
 
-```
+```{r yamlTemplate, eval=FALSE}
 # registe a new app in Fitbit developer site at # https://dev.fitbit.com/apps/new
 # follow the instruction on https://hydroecology.net/getting-detailed-fitbit-data-with-r/
 # fill these var contents and save as 'fitbit_config.yml'
