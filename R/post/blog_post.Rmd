@@ -172,6 +172,12 @@ polar_hr <- tibble(
   polar_hr = as.integer(hr)
 )
 
+# overview
+summary(polar_hr)
+
+```
+
+```{r polarHead, cache=TRUE}
 # lets see the content
 polar_hr %>% 
   head(10) %>% 
@@ -179,6 +185,7 @@ polar_hr %>%
   kable_styling(bootstrap_options = "striped", full_width = F)
 
 ```
+
 
 Como no **fitbit**, os dados de frequência cardíaca do **Polar H7** obtidos são medições minuto à minuto da taxa batimentos por minuto, é possível visualizar a frequência cardíaca ao longo exercício.
 
