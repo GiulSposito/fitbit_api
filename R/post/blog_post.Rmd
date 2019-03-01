@@ -3,6 +3,7 @@ title: "Comparing Fitbit and Polar HR data"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 No MTB que fiz no último fim de semana eu usei tanto um Polar H7 quando e um Fitbit Charge 
@@ -33,11 +34,21 @@ Primeiro passo é obter os dados dos dispositivos.
 
 Para o **fitbit**, o acesso dos dados pode ser feita via [Web API](https://dev.fitbit.com/build/reference/web-api/) que utiliza [Oauth 2.0](https://oauth.net/2/) para autenticação d autorização, então é necessário obter [ID e Secret](https://www.oauth.com/oauth2-servers/client-registration/client-id-secret/) fazendo o cadastro no portal de desenvolvimento.
 
-1. passo a passo
-1. passo a passo 
-1. passo a passo
+1. enter whatever you want for Application name and description
+1. in the application website box, paste the URL of your google sheet from Step 1
+1. for organization put “self”
+1. for organization website put the URL of your google sheet from Step 1
+1. for OAuth 2.0 Application Type select “Personal”
+1. for Callback URL put in http://localhost:1410/
+1. for Default Access Type select “Read Only”
+1. click “save”
 
-Com os parametros de acesso em mãos, podemos obter os dados capturados do **fitbit** usando o `httr package`.
+You should now be at a page that shows your
+
+1. OAuth 2.0 Client ID
+1. Client Secret
+
+Com os parametros de acesso em mãos preencha um arquivo de configuração `fitbit_config.yml` (veja apendice) e estaremos prontos para obter os dados capturados do **fitbit** usando o `httr package`.
 
 ```{r loadingSettings, cache=TRUE, message=FALSE, warning=FALSE}
 
@@ -58,7 +69,7 @@ As funções `oauth_app`, `oauth_endpoint` e `oauth2.0_token` executam o fluxo d
 
 Podemos então fazer a chamada ao *[endpoint](https://dev.fitbit.com/build/reference/web-api/heart-rate/)* responsável pela consulta às informações de frequência cardíaca.
 
-```{r heartRateEndPoint, cache=T, warning=F, message=F}
+```{r heartRateEndPoint, cache=TRUE, warning=FALSE, message=FALSE}
 
 # request HR data
 # Resource URL - There are two acceptable formats for retrieving time series data:
@@ -128,6 +139,61 @@ fitbit_hr %>%
   scale_color_gradient(name="heart rate (bpm)",low="green", high="red") +
   theme_minimal()
 ```
+
+### Polar H7
+
+Diferente do **fitbit** para obter os dados de frequência cardíaca do **Polar H7** o caminho mais fácil é puxar os dados da App ao qual ele estava sincronizado, na ocasião, usei a aplicação [Strava](https://www.strava.com/). Como fizemos no [post "Ploting your mtb track with r"]([https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/]), iremos fazer o download do arquivo [GPX](https://en.wikipedia.org/wiki/GPS_Exchange_Format) contendo os dados registrados durante a sessão de exercício, direto do site da App, e processar o XML para extrar os dados que procuramos.
+
+```{r loadGPX, cache=TRUE, message=FALSE, warning=FALSE}
+
+# read gpx file
+library(XML)
+gpx_file <- htmlTreeParse("./data/Visconde_de_Sotello_e_Moenda.gpx", useInternalNodes = T)
+
+# trackpoint XML  structure 
+#
+# <trkpt lat="-22.7036870" lon="-46.7560630">
+#   <ele>675.1</ele>
+#   <time>2019-02-24T11:13:36Z</time>
+#   <extensions>
+#     <gpxtpx:TrackPointExtension>
+#       <gpxtpx:hr>105</gpxtpx:hr>
+#     </gpxtpx:TrackPointExtension>
+#   </extensions>
+# </trkpt>
+
+# extract (by xpath) times
+dtime <- xpathSApply(gpx_file, path = "//trkpt/time", xmlValue) 
+hr    <- xpathSApply(gpx_file, path = "//trkpt/extensions/trackpointextension/hr", xmlValue) 
+
+# create a tibble
+polar_hr <- tibble(
+  datetime  = ymd_hms(dtime),
+  polar_hr = as.integer(hr)
+)
+
+# lets see the content
+polar_hr %>% 
+  head(10) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+Como no **fitbit**, os dados de frequência cardíaca do **Polar H7** obtidos são medições minuto à minuto da taxa batimentos por minuto, é possível visualizar a frequência cardíaca ao longo exercício.
+
+```{r plotPolar, cache=TRUE}
+
+# Visualize dataset
+polar_hr %>% 
+  ggplot() +
+  geom_line(aes(x=datetime, y=polar_hr, color=polar_hr)) +
+  scale_color_gradient(name="heart rate (bpm)",low="green", high="red") + 
+  theme_minimal()
+
+```
+
+
 
 
 ## Apendix 
