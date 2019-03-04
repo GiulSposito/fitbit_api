@@ -15,7 +15,7 @@ Neste post vamos comparar aquisição de dados de frequência cardíaca realizad
 
 ### Devices
 
-O modelo de pulseira utilizado foi o **[fitbit ChargeHR](https://www.fitbit.com/be/chargehr)**, que atualmente já não é mais comercializado. Para realizar a medição da frequência cardíaca **fitbit** uma tecnologia própria chama [PurePulse](https://www.fitbit.com/purepulse) When your heart beats, your capillaries expand and contract based on blood volume changes. PurePulse LEDs (light-emitting diodes) on your Fitbit device reflect onto the skin to detect blood volume changes, and finely-tuned algorithms are applied to measure heart rate automatically and continuously. The heart-rate icon you see on the display tells you if you're in 1 of 3 heart-rate zones.
+O modelo de pulseira utilizado foi o **[fitbit ChargeHR](https://www.fitbit.com/be/chargehr)**, que atualmente já não é mais comercializado. Para realizar a medição da frequência cardíaca **fitbit** uma tecnologia própria chama [PurePulse](https://www.fitbit.com/purepulse). When your heart beats, your capillaries expand and contract based on blood volume changes. PurePulse LEDs (light-emitting diodes) on your Fitbit device reflect onto the skin to detect blood volume changes, and finely-tuned algorithms are applied to measure heart rate automatically and continuously.
 
 ![fitbit Charge HR](./images/fitbit.jpg)
 
@@ -271,7 +271,7 @@ plot(model)
 
 Bland e Altman publicaram em 1983 o primeiro artigo com uma metodologia alternativa ao cálculo do coeficiente de correlação, metodologia empregada até então. O coeficiente de correlação não avalia concordância e sim associação, coisas bem diferentes.
 
-A metodologia proposta inicialmente por Bland e  Altman para avaliar a concordância entre duas variáveis (X e Y) parte de uma visualização gráfica a partir de um gráfico de dispersão entre a diferença das duas variáveis (X - Y) e a média das duas (X + Y)/2. Neste gráfico é possível visualizar o viés (o quanto as diferenças se afas-tam do valor zero), o erro (a dispersão dos pontos das diferenças ao redor da média), além de outliers e tendências.
+A metodologia proposta inicialmente por Bland e  Altman para avaliar a concordância entre duas variáveis (X e Y) parte de uma visualização gráfica a partir de um gráfico de dispersão entre a diferença das duas variáveis (X - Y) e a média das duas (X + Y)/2. 
 
 Vamos reproduzir a metodologia com esses dados.
 
@@ -297,14 +297,70 @@ hr_data_ba %>%
 
 ```
 
-Deve ser avaliado se as diferenças entre as variáveis dependem ou não do tamanho da medida. Isto pode ser feito através de uma correlação entre as diferenças e as médias, que deve ser nula. A hipótese do viés ser ou não igual a zero pode ser testada por um teste-t para amostras emparelhadas. A partir do cálculo do viés ( d ) e do seu desvio-padrão (sd) é possível chegar aos limites de concordância: d ± 1,96sd, que devem ser calculados e incluídos no gráfico. Se o viés apresenta distribuição normal, estes limites representam a região em que se encontram 95% das diferenças nos casos estudados.
+Neste gráfico é possível visualizar o viés (o quanto as diferenças se afastam do valor zero), o erro (a dispersão dos pontos das diferenças ao redor da média), além de outliers e tendências.
 
+A partir do cálculo do viés ( d ) e do seu desvio-padrão (sd) é possível chegar aos limites de concordância: d ± 1,96sd, que devem ser calculados e incluídos no gráfico. Se o viés apresenta distribuição normal, estes limites representam a região em que se encontram 95% das diferenças nos casos estudados.
+
+```{r baltmanPlot, cache=TRUE}
+
+# Bland Altman plot
+hr_data_ba %>% 
+  ggplot(aes(x=mean, y=diff)) + 
+  geom_point() +
+  geom_hline(yintercept=0, color="grey") +
+  geom_hline(yintercept=hr_data_ba$diff.mn[1], linetype=2, color="blue") +
+  geom_hline(yintercept=hr_data_ba$upper.lim[1], linetype=2, color="red") +
+  geom_hline(yintercept=hr_data_ba$lower.lim[1], linetype=2, color="red") +
+  theme_minimal()
+
+```
+
+Visualmente vemos que não há viés (média das diferenças é próxima a zero) e de que os a disperção das diferenças estão dentro de um intervalo bem pequeno:
+
+- Viés: `r hr_data_ba$diff.mn[1]`
+- Dispersão ($2\sigma$): `r hr_data_ba$upper.lim[1]` bpm
+
+Antes de seguir com a análise, vamos dar uma olhada na distribuição das diferenças das medições do **fitbit** em relação ao **polar h7**:
+
+```{r diffplot, cache=TRUE}
+# Overview
+summary(hr_data_ba$diff.pct)
+
+
+# Visualizing
+hr_data_ba %>% 
+  ggplot() +
+  geom_density(aes(x=diff.pct), color="blue", fill="blue" ) +
+  theme_minimal()
+
+```
+
+
+Para o teste Bland-Altman , o que deve ser avaliado é se as diferenças entre as variáveis dependem ou não do tamanho da medida. Isto pode ser feito através de uma correlação entre as diferenças e as médias, que deve ser nula. 
+
+```{r corrBlandAlt, cache=TRUE}
+# correlation between diff and mean
+cor.test(x=hr_data_ba$mean, y=hr_data_ba$diff, alternative = "two.sided")
+```
+
+Nossos números mostraram alguma correlação, onde deveria não ser encontrada. Já a hipótese do viés ser ou não igual a zero pode ser testada por um teste-t para amostras emparelhadas. 
+
+```{r ttestBlandAlt, cache=TRUE}
+# t.test between paired samples
+t.test(x=hr_data_ba$mean, y=hr_data_ba$diff, paired = T)
+```
+
+Aqui, o viés mostrou-se praticamente zero. 
+
+## Conclusion
+
+O **fitbit** capitura a frequência cardíaca baseado na expansão e contração dos capilares na pele e faz essa medição com base na reflexão/absorção de luzes de LED, além de algorítimos de análise. Esse método mostrou-se comparável e em concordância com as medições obtidas no **polar h7**.
 
 ## Apendix 
 
 ### config.yml
 
-Para evitar que senhas, app_ID e o secret fiquem *hard coded* e acabem versionados e expostos no [Github](https://github.com/) por acidente, eu costumo criar um aquivo [yaml](https://en.wikipedia.org/wiki/YAML) e coloca-lo no `.gitignore`. Neste código o arquivo yaml tem o seguinte formato:
+Para evitar que *senhas*, *IDs* e *secrets* fiquem *hard coded* e acabem versionados e expostos no [Github](https://github.com/) por acidente, eu costumo criar um aquivo [yaml](https://en.wikipedia.org/wiki/YAML) e coloca-lo no `.gitignore`. Neste código, o arquivo yaml tem o seguinte formato:
 
 
 ```{r yamlTemplate, eval=FALSE}
@@ -324,9 +380,9 @@ refresh_token_uri: ""
 
 Referências utilizadas neste post:
 
-1. [https://www.polar.com]
-1. [https://www.fitbit.com]
-1. [https://dev.fitbit.com]
-1. [https://seer.ufrgs.br/hcpa/article/view/11727/7021]
-1. [https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/]
-1. [https://www.telegraph.co.uk/technology/news/12086337/Fitbit-heart-rate-tracking-is-dangerously-inaccurate-lawsuit-claims.html]
+1. https://www.polar.com
+1. https://www.fitbit.com
+1. https://dev.fitbit.com
+1. https://seer.ufrgs.br/hcpa/article/view/11727/7021
+1. https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/
+1. https://www.telegraph.co.uk/technology/news/12086337/Fitbit-heart-rate-tracking-is-dangerously-inaccurate-lawsuit-claims.html
