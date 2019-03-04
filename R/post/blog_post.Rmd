@@ -3,7 +3,6 @@ title: "Comparing Fitbit and Polar HR data"
 output:
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 No MTB que fiz no último fim de semana eu usei tanto um Polar H7 quando e um Fitbit Charge 
@@ -18,17 +17,17 @@ Neste post vamos comparar aquisição de dados de frequência cardíaca realizad
 
 O modelo de pulseira utilizado foi o **[fitbit ChargeHR](https://www.fitbit.com/be/chargehr)**, que atualmente já não é mais comercializado. Para realizar a medição da frequência cardíaca **fitbit** uma tecnologia própria chama [PurePulse](https://www.fitbit.com/purepulse) When your heart beats, your capillaries expand and contract based on blood volume changes. PurePulse LEDs (light-emitting diodes) on your Fitbit device reflect onto the skin to detect blood volume changes, and finely-tuned algorithms are applied to measure heart rate automatically and continuously. The heart-rate icon you see on the display tells you if you're in 1 of 3 heart-rate zones.
 
-![fitbit Charge HR](https://images-na.ssl-images-amazon.com/images/I/51wafNtYODL.jpg)
+![fitbit Charge HR](./images/fitbit.jpg)
 
 O monitor de frequencia cardíaca usado, foi o **[Polar H7 Heart Rate Sensor](https://www.polar.com/us-en/products/accessories/h10_heart_rate_sensor)**, que trabalha como um Eletro Cardiograma, ou seja, eletrodos em contato com a pele detectam o sinal elétrico disparado pelo coração a cada batida cardíaca.
 
-![Polar H7](https://cdn.shopify.com/s/files/1/0904/0726/products/polar-polar-accessories-black-retail-package-med-xl-30-45-inches-polar-h7-bluetooth-smart-chest-transmitter-7795311878_x700.png?v=1538423599)
+![Polar H7](./images/polar.png)
 
 Dessa maneira podemos comparar a qualidade e a precisão dos dados de frequência cardíaca obtidos com tecnologias bem diferentes.
 
 ## Data Acquisitions
 
-Primeiro passo é obter os dados dos dispositivos.
+Primeiro passo é obter os dados dos dispositivos, e para cada um usaremos uma estratégia diferente, para o **fitbit** faremos acesso aos dados via Web API, e para o **Polar H7** extrairemos do arquivo **GPX** do exercício.
 
 ### Fitbit
 
@@ -201,6 +200,104 @@ polar_hr %>%
 ```
 
 
+## Análise
+
+### Comparando Medições
+
+Com os dados em mãos, podemos comparar as medições obtidas pelos dois dispositivos. Em ambas as medições, a frequencia cardíaca é medida em batimentos por minuto e armazenada minuto à minuto, vamos então fazer um join no timestamp da medição.
+
+```{r joinHRs, cache=TRUE}
+
+# join both datasets by the timestamp
+# the datetime in polar_hr data are in UTC and the fitbit are in local time
+# ajusting the "timezone" and merging both devices removing 2 hours from polar data
+polar_hr %>% 
+  mutate(datetime = datetime - hours(2)) %>% 
+  inner_join(fitbit_hr, by = "datetime") -> hr_data
+
+
+# let's see what we got
+hr_data %>% 
+  head(10) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Ploting both data toghether.
+
+```{r plotHRdata, cache=TRUE} 
+# lets plot the dataset
+hr_data %>% 
+  gather(device, hr, -datetime) %>% 
+  ggplot(aes(x=datetime, y=hr, group=device)) +
+  geom_line(aes(color=device)) +
+  theme_minimal()
+```
+
+Podemos ver que as medições do **Fitbit** seguem as do **Polar H7** com extraordinária precisão, podemos avaliar melhor, a relação entre eles, comparando os valores de cada medição plotando a relação entre ambos.
+
+```{r corrPlot, cache=TRUE}
+
+# lets see the correlation
+hr_data %>% 
+  ggplot(aes(x=polar_hr, y=fitbit_hr)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  theme_minimal()
+
+```
+
+A correlação entre as duas medições, embora não seja exatamente precisa, é evidente, vamos testá-la
+
+```{r corrTestes, cache=TRUE}
+# correlation test
+cor.test(x=hr_data$polar_hr, y=hr_data$fitbit_hr, alternative = "two.sided")
+
+```
+
+Podemos modelar as medições do **fitbit** em fução do **polar h7** e analisar como os resíduos se comportam.
+
+```{r corrModel, cache=TRUE}
+# check the quality of a linear correlation
+model <- lm(fitbit_hr~polar_hr, hr_data)
+summary(model)
+
+par(mfrow = c(2, 2))
+plot(model)
+```
+
+
+### Concordância (Teste de Bland-Altman)
+
+Bland e Altman publicaram em 1983 o primeiro artigo com uma metodologia alternativa ao cálculo do coeficiente de correlação, metodologia empregada até então. O coeficiente de correlação não avalia concordância e sim associação, coisas bem diferentes.
+
+A metodologia proposta inicialmente por Bland e  Altman para avaliar a concordância entre duas variáveis (X e Y) parte de uma visualização gráfica a partir de um gráfico de dispersão entre a diferença das duas variáveis (X - Y) e a média das duas (X + Y)/2. Neste gráfico é possível visualizar o viés (o quanto as diferenças se afas-tam do valor zero), o erro (a dispersão dos pontos das diferenças ao redor da média), além de outliers e tendências.
+
+Vamos reproduzir a metodologia com esses dados.
+
+```{r blandAltMath, cache=TRUE}
+
+# math for Bland Altman test
+hr_data %>% 
+  mutate(
+    mean      = (polar_hr + fitbit_hr)/2,
+    diff      = fitbit_hr - polar_hr,
+    diff.pct  = (fitbit_hr - polar_hr)/polar_hr,
+    diff.mn   = mean(diff),
+    diff.sd   = sqrt(var(diff)),
+    upper.lim = diff.mn + (2*diff.sd), 
+    lower.lim = diff.mn - (2*diff.sd),
+  ) -> hr_data_ba
+
+# let's see
+hr_data_ba %>% 
+  head(10) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+Deve ser avaliado se as diferenças entre as variáveis dependem ou não do tamanho da medida. Isto pode ser feito através de uma correlação entre as diferenças e as médias, que deve ser nula. A hipótese do viés ser ou não igual a zero pode ser testada por um teste-t para amostras emparelhadas. A partir do cálculo do viés ( d ) e do seu desvio-padrão (sd) é possível chegar aos limites de concordância: d ± 1,96sd, que devem ser calculados e incluídos no gráfico. Se o viés apresenta distribuição normal, estes limites representam a região em que se encontram 95% das diferenças nos casos estudados.
 
 
 ## Apendix 
