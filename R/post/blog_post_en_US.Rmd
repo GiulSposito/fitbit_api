@@ -320,9 +320,9 @@ hr_data_ba %>%
 
 ```
 
-Neste gráfico é possível visualizar o viés (o quanto as diferenças se afastam do valor zero), o erro (a dispersão dos pontos das diferenças ao redor da média), além de outliers e tendências.
+In this graph, it's possible to visualize the bias (how much the differences deviate from the zero value) and the error distribution (the dispersion of the points of the differences around the mean), in addition to outliers and tendencies.
 
-A partir do cálculo do viés ( d ) e do seu desvio-padrão (sd) é possível chegar aos limites de concordância: d ± 1,96sd, que devem ser calculados e incluídos no gráfico. Se o viés apresenta distribuição normal, estes limites representam a região em que se encontram 95% das diferenças nos casos estudados.
+From the calculation of bias (d) and its standard deviation (sd) it is possible to reach the limits of agreement: d ± 1,96sd, which must be calculated and included in the graph. If the bias presents normal distribution, these limits represent the region where 95% of the differences in the studied cases are found.
 
 ```{r baltmanPlot, cache=TRUE}
 
@@ -338,12 +338,12 @@ hr_data_ba %>%
 
 ```
 
-Visualmente vemos que não há viés (média das diferenças é próxima a zero) e de que os a disperção das diferenças estão dentro de um intervalo bem pequeno:
+Visually we see that there is no bias (average of the differences is close to zero) and that the dispersion of the differences are within a very small range:
 
-- Viés: `r hr_data_ba$diff.mn[1]`
-- Dispersão ($2\sigma$): `r hr_data_ba$upper.lim[1]` bpm
+- Bias: `r hr_data_ba$diff.mn[1]`
+- Dispersion ($2\sigma$): `r hr_data_ba$upper.lim[1]` bpm
 
-Antes de seguir com a análise, vamos dar uma olhada na distribuição das diferenças das medições do **fitbit** em relação ao **polar h7**:
+Before proceeding with the analysis, let's take a look at the distribution of the differences in measurements of **fitbit** relative to polar **h7**:
 
 ```{r diffplot, cache=TRUE}
 # Overview
@@ -359,33 +359,33 @@ hr_data_ba %>%
 ```
 
 
-Para o teste Bland-Altman , o que deve ser avaliado é se as diferenças entre as variáveis dependem ou não do tamanho da medida. Isto pode ser feito através de uma correlação entre as diferenças e as médias, que deve ser nula. 
+For the Bland-Altman test, what should be evaluated is whether the differences between the variables depend on the measurement size or not. This can be done through a correlation between differences and averages, which should be null.
 
 ```{r corrBlandAlt, cache=TRUE}
 # correlation between diff and mean
 cor.test(x=hr_data_ba$mean, y=hr_data_ba$diff, alternative = "two.sided")
 ```
 
-Nossos números mostraram alguma correlação, onde deveria não ser encontrada. Já a hipótese do viés ser ou não igual a zero pode ser testada por um teste-t para amostras emparelhadas. 
+Our numbers showed some correlation, where it should not be found, even with the large *p-value*. The bias hypothesis may or may not be equal to zero can be tested by a t-test for paired samples.
 
 ```{r ttestBlandAlt, cache=TRUE}
 # t.test between paired samples
 t.test(x=hr_data_ba$mean, y=hr_data_ba$diff, paired = T)
 ```
 
-Aqui, o viés mostrou-se praticamente zero, demonstrando concodância entre as medições do **Fitbit** e do **Polar H7**.
+Here, the bias was practically zero, demonstrating agreement between the measurements of **Fitbit** and **Polar H7**.
 
 ## Conclusion
 
-Neste post, usamos o pacote `httr` para acessar uma `WebAPI` usando `OAuth2.0` para obter dados do **Fitbit** e compará-los com os obtidos por um **Polar H7**, importados de um arquivo GPX.
+In this post we use the `httr package` to access a` WebAPI` using `OAuth2.0` to get data from **Fitbit** and compare it with that obtained by a **Polar H7**, imported from a `GPX file`
 
-O **fitbit** capitura a frequência cardíaca baseado na expansão e contração dos capilares na pele e faz essa medição com base na reflexão/absorção de luzes de LED, além de algorítimos de análise. Esse método mostrou-se comparável e em concordância com as medições obtidas no **polar h7**, que captura os sinais elétricos do batimento.
+The **fitbit** captures the heart rate based on the expansion and contraction of the capillaries in the skin and makes this measurement based on the reflection / absorption of LED lights. This method proved to be comparable and in agreement with the measurements obtained in the **Polar H7** heart monitor, which captures the electrical signals of the beat.
 
 ## Apendix 
 
 ### config.yml
 
-Para evitar que *senhas*, *IDs* e *secrets* fiquem *hard coded* e acabem versionados e expostos no [Github](https://github.com/) por acidente, eu costumo criar um aquivo [yaml](https://en.wikipedia.org/wiki/YAML) e coloca-lo no `.gitignore`. Neste código, o arquivo yaml tem o seguinte formato:
+To prevent *passwords*, *IDs* and *secrets* from being hard coded and getting versioned and exposed in [Github] (https://github.com/) accidentally, I usually create a `[yaml file](https://en.wikipedia.org/wiki/YAML)` and put it in `.gitignore`. In this code, the `yaml file` has the following format:
 
 
 ```{r yamlTemplate, eval=FALSE}
@@ -401,9 +401,9 @@ auth_uri: ""
 refresh_token_uri: ""
 ```
 
-### Referências
+### References
 
-Referências utilizadas neste post:
+References used in this post:
 
 1. https://www.polar.com
 1. https://www.fitbit.com
