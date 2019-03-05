@@ -5,7 +5,7 @@ output:
     df_print: paged
 ---
 
-No MTB que fiz no último fim de semana eu usei tanto um Polar H7 quando e um Fitbit Charge 
+A pulseira *Fitbit** capitura a frequência cardíaca baseado na expansão e contração dos capilares na pele e faz essa medição com base na reflexão/absorção de luzes de LED, além de algorítimos de análise, diferentement do métudo usado monitor de frequência cardíaca **Polar H7**, que captura os sinais elétricos do batimento. Neste post, acessaremos uma `WebAPI` usando `OAuth2.0` para obter dados do **Fitbit** e compará-los com os obtidos por um **Polar H7**, importados de um arquivo GPX.
 
 <!--more-->
 
@@ -49,7 +49,7 @@ You should now be at a page that shows your
 
 Com os parametros de acesso em mãos preencha um arquivo de configuração `fitbit_config.yml` (veja apendice) e estaremos prontos para obter os dados capturados do **fitbit** usando o `httr package`.
 
-```{r loadingSettings, cache=TRUE, message=FALSE, warning=FALSE}
+```{r loadingSettings, eval=FALSE, message=FALSE, warning=FALSE}
 
 # loading ID and Secret 
 # (see the post apendix)
@@ -68,7 +68,7 @@ As funções `oauth_app`, `oauth_endpoint` e `oauth2.0_token` executam o fluxo d
 
 Podemos então fazer a chamada ao *[endpoint](https://dev.fitbit.com/build/reference/web-api/heart-rate/)* responsável pela consulta às informações de frequência cardíaca.
 
-```{r heartRateEndPoint, cache=TRUE, warning=FALSE, message=FALSE}
+```{r heartRateEndPointFake, eval=FALSE, warning=FALSE, message=FALSE}
 
 # request HR data
 # Resource URL - There are two acceptable formats for retrieving time series data:
@@ -96,6 +96,14 @@ resp <- GET(gen_hr_url(.date="2019-02-24"), conf=config(token=token))
 resp$status_code
 
 ```
+
+```{r hbFitbitCache, echo=FALSE, cache=TRUE}
+
+resp <- readRDS("./data/fitbit_http_resp.rds")
+resp$status_code
+
+```
+
 
 Se tudo o ocorreu bem, a [requisição http](https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview) devolveu [status 200](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html), então podemos processar o [json](https://www.w3schools.com/js/js_json_intro.asp) do conteúdo da resposta para extrair os dados de frequencia cardíaca requisitada.
 
@@ -350,11 +358,13 @@ Nossos números mostraram alguma correlação, onde deveria não ser encontrada.
 t.test(x=hr_data_ba$mean, y=hr_data_ba$diff, paired = T)
 ```
 
-Aqui, o viés mostrou-se praticamente zero. 
+Aqui, o viés mostrou-se praticamente zero, demonstrando concodância entre as medições do **Fitbit** e do **Polar H7**.
 
 ## Conclusion
 
-O **fitbit** capitura a frequência cardíaca baseado na expansão e contração dos capilares na pele e faz essa medição com base na reflexão/absorção de luzes de LED, além de algorítimos de análise. Esse método mostrou-se comparável e em concordância com as medições obtidas no **polar h7**.
+Neste post, usamos o pacote `httr` para acessar uma `WebAPI` usando `OAuth2.0` para obter dados do **Fitbit** e compará-los com os obtidos por um **Polar H7**, importados de um arquivo GPX.
+
+O **fitbit** capitura a frequência cardíaca baseado na expansão e contração dos capilares na pele e faz essa medição com base na reflexão/absorção de luzes de LED, além de algorítimos de análise. Esse método mostrou-se comparável e em concordância com as medições obtidas no **polar h7**, que captura os sinais elétricos do batimento.
 
 ## Apendix 
 
