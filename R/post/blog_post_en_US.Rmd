@@ -1,5 +1,5 @@
 ---
-title: "Comparing Fitbit and Polar H7 data"
+title: "Comparing Fitbit and Polar H7 heart rate data"
 output:
   html_document:
     df_print: paged
@@ -60,7 +60,7 @@ After that, you should now be at a page that shows your
 1. Authentication URL
 1. Refresh Token URL
 
-These parameters will be used to get or renew the  `[API Access Token](https://www.oauth.com/oauth2-servers/access-tokens/)`. Fill a `fitbit_config.yml` configuration file (see the appendix at the end of this post) with them and we'll be ready to request and get the **Fitbit** data using the` httr package`.
+These parameters will be used to get or renew the [API Access Token](https://www.oauth.com/oauth2-servers/access-tokens/). Fill a `fitbit_config.yml` configuration file (see the appendix at the end of this post) with them and we'll be ready to request and get the **Fitbit** data using the` httr package`.
 
 
 ```{r loadingSettings, eval=FALSE, message=FALSE, warning=FALSE}
@@ -164,7 +164,7 @@ fitbit_hr %>%
 
 ### Polar H7
 
-Unlike the **Fitbit**, to access the heart rate data of the **Polar H7**, the easiest way is to pull the data from the App used in to track the training session, at that time I used the [Strava Application](https://www.strava.com/) connected to the heart monitor by bluetooth. As we did in the **[post "Ploting your mtb track with R"](https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/)**, we download the `[GPX](https://en.wikipedia.org/wiki/GPS_Exchange_Format)` file containing the data recorded during the exercise session, directly from the **Strava** website, and then process the XML to extract the data we are looking for.
+Unlike the **Fitbit**, to access the heart rate data of the **Polar H7**, the easiest way is to pull the data from the App used in to track the training session, at that time I used the [Strava Application](https://www.strava.com/) connected to the heart monitor by bluetooth. As we did in the post **["Ploting your mtb track with R"](https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/)**, we download the [GPX](https://en.wikipedia.org/wiki/GPS_Exchange_Format) file containing the data recorded during the exercise session, directly from the **Strava** website, and then process the XML to extract the data we are looking for.
 
 ```{r loadGPX, cache=TRUE, message=FALSE, warning=FALSE}
 
@@ -385,7 +385,7 @@ The **fitbit** captures the heart rate based on the expansion and contraction of
 
 ### config.yml
 
-To prevent *passwords*, *IDs* and *secrets* from being hard coded and getting versioned and exposed in [Github] (https://github.com/) accidentally, I usually create a `[yaml file](https://en.wikipedia.org/wiki/YAML)` and put it in `.gitignore`. In this code, the `yaml file` has the following format:
+To prevent *passwords*, *IDs* and *secrets* from being hard coded and getting versioned and exposed in [Github](https://github.com/) accidentally, I usually create a [yaml file](https://en.wikipedia.org/wiki/YAML) and put it in `.gitignore`. In this code, the `yaml file` has the following format:
 
 
 ```{r yamlTemplate, eval=FALSE}
