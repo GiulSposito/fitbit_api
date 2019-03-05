@@ -1,5 +1,5 @@
 ---
-title: "Comparing Fitbit and Polar HR data"
+title: "Comparing Fitbit and Polar H7 data"
 output:
   html_document:
     df_print: paged
@@ -15,11 +15,15 @@ In this post we will compare acquisition of heart rate data performed by two dif
 
 How good is the **Fitbit** measures comparing to **Polar H7**? They agree with the measures? How the differences are distributed? I did a MTB session using both devices, now I can use R to access the data and compare the measures.
 
-### the devices
+### The devices
 
-The bracelet model used was **[Fitbit ChargeHR] (https://www.fitbit.com/be/chargehr)**, which is no longer marketed, but use the same technology embedded in newer models. The **Fitbit** uses a proprietary technology called *[PurePulse](https://www.fitbit.com/purepulse)* a to perform a heart rate measurement. When your heart beats, yours capillaries in the skin expand and contract based on changes in blood volume. The light of the *PurePulse LEDs* on your Fitbit device reflect on the skin to detect changes in blood volume, and finely tuned algorithms are applied to measure heart rate automatically and continuously.
+#### Fitbit Charge HR
+
+The bracelet model used was **[Fitbit ChargeHR](https://www.fitbit.com/be/chargehr)**, which is no longer marketed, but use the same technology embedded in newer models. The **Fitbit** uses a proprietary technology called *[PurePulse](https://www.fitbit.com/purepulse)* a to perform a heart rate measurement. When your heart beats, yours capillaries in the skin expand and contract based on changes in blood volume. The light of the *PurePulse LEDs* on your Fitbit device reflect on the skin to detect changes in blood volume, and finely tuned algorithms are applied to measure heart rate automatically and continuously.
 
 ![fitbit Charge HR](./images/fitbit.jpg)
+
+#### Polar H7
 
 The heart rate monitor used was **[Polar H7 Heart Rate Sensor](https://www.polar.com/us-en/products/accessories/h10_heart_rate_sensor)**, which works as an Electrocardiogram, or in other words, electrodes in contact with the skin detect the electrical signal triggered by the heart in each heart beat.
 
@@ -29,7 +33,7 @@ In this way we will compare the quality and accuracy of heart rate data obtained
 
 ## Data Acquisitions
 
-The first steps is to get the devices data, and for each one we will use a different strategy, for **Fitbit** we'll access the data via `Web API`, and for the **Polar H7** we'll extract from the training session **GPX** file.
+The first steps is to get the devices data, and for each one we will use a different strategy, for **Fitbit** we'll access the data via `Web API`, and for the **Polar H7** we'll extract from the training session `GPX file`.
 
 ### Fitbit
 
@@ -54,9 +58,9 @@ After that, you should now be at a page that shows your
 1. Client Secret
 1. URL Callback you defined
 1. Authentication URL
-1. Refresh Token URL"
+1. Refresh Token URL
 
-These parameters will be used to get or renew the `API [Access Token](https://www.oauth.com/oauth2-servers/access-tokens/)`. Fill a `fitbit_config.yml` configuration file (see the *appendix* at the end of this post) with them and we'll be ready to request and get the **Fitbit** data using the` httr package`.
+These parameters will be used to get or renew the  `[API Access Token](https://www.oauth.com/oauth2-servers/access-tokens/)`. Fill a `fitbit_config.yml` configuration file (see the appendix at the end of this post) with them and we'll be ready to request and get the **Fitbit** data using the` httr package`.
 
 
 ```{r loadingSettings, eval=FALSE, message=FALSE, warning=FALSE}
@@ -108,14 +112,15 @@ resp$status_code
 ```
 
 ```{r hbFitbitCache, echo=FALSE, cache=TRUE}
-
+library(glue)
+library(httr)
 resp <- readRDS("./data/fitbit_http_resp.rds")
 resp$status_code
 
 ```
 
 
-Se tudo o ocorreu bem, a [requisição http](https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview) devolveu [status 200](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html), então podemos processar o [json](https://www.w3schools.com/js/js_json_intro.asp) do conteúdo da resposta para extrair os dados de frequencia cardíaca requisitada.
+If everything went well, the [http request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview) returned [status 200](https://www.w3.org/ Protocols / rfc2616 / rfc2616-sec10.html), then we can process the [json](https://www.w3schools.com/js/js_json_intro.asp) of the response content to extract the requested heart rate data.
 
 ```{r fbJsonHandling, cache=TRUE, message=FALSE, warning=FALSE}
 
@@ -146,7 +151,7 @@ fitbit_hr %>%
   kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
-Os dados de frequência cardíaca do **fitbit** obtidos são medições minuto à minuto da taxa batimentos por minuto, é possível visualizar a frequência cardíaca ao longo do dia.
+The **Fitbit's** heart rate data obtained are minute-by-minute measurements of how much the heart beated, i.e., heart beats per minute, it is possible to plot the heart rate captured by the *wearable* throughout the day.
 
 ```{r fbHeartHate, cache=TRUE, message=FALSE, warning=FALSE}
 # ploting HR x Datatime
@@ -159,7 +164,7 @@ fitbit_hr %>%
 
 ### Polar H7
 
-Diferente do **fitbit** para obter os dados de frequência cardíaca do **Polar H7** o caminho mais fácil é puxar os dados da App ao qual ele estava sincronizado, na ocasião, usei a aplicação [Strava](https://www.strava.com/). Como fizemos no [post "Ploting your mtb track with r"]([https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/]), iremos fazer o download do arquivo [GPX](https://en.wikipedia.org/wiki/GPS_Exchange_Format) contendo os dados registrados durante a sessão de exercício, direto do site da App, e processar o XML para extrar os dados que procuramos.
+Unlike the **Fitbit**, to access the heart rate data of the **Polar H7**, the easiest way is to pull the data from the App used in to track the training session, at that time I used the [Strava Application](https://www.strava.com/) connected to the heart monitor by bluetooth. As we did in the **[post "Ploting your mtb track with R"](https://yetanotheriteration.netlify.com/2018/01/ploting-your-mtb-track-with-r/)**, we download the `[GPX](https://en.wikipedia.org/wiki/GPS_Exchange_Format)` file containing the data recorded during the exercise session, directly from the **Strava** website, and then process the XML to extract the data we are looking for.
 
 ```{r loadGPX, cache=TRUE, message=FALSE, warning=FALSE}
 
@@ -204,7 +209,7 @@ polar_hr %>%
 ```
 
 
-Como no **fitbit**, os dados de frequência cardíaca do **Polar H7** obtidos são medições minuto à minuto da taxa batimentos por minuto, é possível visualizar a frequência cardíaca ao longo exercício.
+As **Fitbit's** data, the heart rate from the **Polar H7** obtained are minute-by-minute beats rate, it is possible to visualize the heart rate along the training session.
 
 ```{r plotPolar, cache=TRUE}
 
@@ -218,11 +223,11 @@ polar_hr %>%
 ```
 
 
-## Análise
+## Analysis
 
-### Comparando Medições
+### Comparing measurements
 
-Com os dados em mãos, podemos comparar as medições obtidas pelos dois dispositivos. Em ambas as medições, a frequencia cardíaca é medida em batimentos por minuto e armazenada minuto à minuto, vamos então fazer um join no timestamp da medição.
+With the dataset at hand, we now can compare the measurements obtained by the two devices. In both measurements, the heart rate is measured in *beats per minute* and stored minute by minute, let's join them by timestamp.
 
 ```{r joinHRs, cache=TRUE}
 
@@ -252,7 +257,7 @@ hr_data %>%
   theme_minimal()
 ```
 
-Podemos ver que as medições do **Fitbit** seguem as do **Polar H7** com extraordinária precisão, podemos avaliar melhor, a relação entre eles, comparando os valores de cada medição plotando a relação entre ambos.
+We can see that the measurements of **Fitbit** follows the **Polar H7** data with remarkable proximity, we can better evaluate the relation between them plotting one against other.
 
 ```{r corrPlot, cache=TRUE}
 
@@ -265,7 +270,7 @@ hr_data %>%
 
 ```
 
-A correlação entre as duas medições, embora não seja exatamente precisa, é evidente, vamos testá-la
+The correlation between the two measurements, although not exactly accurate, is clear, let's test it
 
 ```{r corrTestes, cache=TRUE}
 # correlation test
@@ -273,7 +278,7 @@ cor.test(x=hr_data$polar_hr, y=hr_data$fitbit_hr, alternative = "two.sided")
 
 ```
 
-Podemos modelar as medições do **fitbit** em fução do **polar h7** e analisar como os resíduos se comportam.
+The correlation are 0.87 and significant (p-value < 2.2e-16). We can do the linear regression of the **Fitbit** measurements on the **Polar h7** and analyze how the residues behaves.
 
 ```{r corrModel, cache=TRUE}
 # check the quality of a linear correlation
@@ -285,13 +290,13 @@ plot(model)
 ```
 
 
-### Concordância (Teste de Bland-Altman)
+### Bland Altman Agreement Analysis
 
-Bland e Altman publicaram em 1983 o primeiro artigo com uma metodologia alternativa ao cálculo do coeficiente de correlação, metodologia empregada até então. O coeficiente de correlação não avalia concordância e sim associação, coisas bem diferentes.
+[Bland and Altman](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4470095/) published in 1983 the first article as an alternative methodology to the calculation of the coefficient of correlation, methodology used until then. The correlation coefficient does not evaluate agreement and yes association between two measures, very different things.
 
-A metodologia proposta inicialmente por Bland e  Altman para avaliar a concordância entre duas variáveis (X e Y) parte de uma visualização gráfica a partir de um gráfico de dispersão entre a diferença das duas variáveis (X - Y) e a média das duas (X + Y)/2. 
+The methodology initially proposed by Bland and Altman to evaluate the agreement between two variables (X and Y) starts from a [graphical view](https://en.wikipedia.org/wiki/Bland%E2%80%93Altman_plot) from a dispersion between the difference of the two variables (X - Y) and the average of the two (X + Y) / 2.
 
-Vamos reproduzir a metodologia com esses dados.
+Let's reproduce the methodology with these data.
 
 ```{r blandAltMath, cache=TRUE}
 
