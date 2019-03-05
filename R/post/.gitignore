@@ -3,3 +3,5 @@ data
 config
 blog_post_cache
 blog_post_files
+blog_post_en_US_cache
+blog_post_en_US_files
